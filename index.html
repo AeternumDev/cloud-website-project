@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unternehmenswebsite — Cloud Programming PoC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #0078d4; }
+        .info { color: #666; margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hochverfügbare Unternehmenswebsite</h1>
+        <p>Cloud Programming Portfolio — DLBSEPCP01_D</p>
+        <p>Diese Seite wird über <strong>Azure App Service (Free F1)</strong> gehostet
+           und über <strong>Azure CDN</strong> global verteilt.</p>
+        <hr>
+        <div class="info">
+            <p><strong>Architektur:</strong> App Service + CDN + Application Insights + Azure Monitor</p>
+            <p><strong>Infrastructure as Code:</strong> ARM Template (azuredeploy.json)</p>
+            <p><strong>Tier:</strong> Free F1 (Proof of Concept) — Upgrade-Pfad zu Standard S1 parametrisiert</p>
+        </div>
+    </div>
+</body>
+</html>
