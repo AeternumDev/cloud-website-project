@@ -4,6 +4,11 @@ REM  Azure Cloud Website - Deployment Script
 REM  Führe dieses Script nach "az login" aus
 REM ============================================
 
+set WEBAPP_NAME=azure-cloud-testwebsite
+set RG_NAME=cloud-website-rg
+set CDN_PROFILE=cloud-website-cdn
+set CDN_ENDPOINT=CDN-azure-cloud
+
 echo.
 echo === Phase A: Azure Login pruefen ===
 az account show --query "{name:name, id:id, state:state}" -o table
@@ -14,7 +19,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo === Phase B1: Resource Group erstellen ===
-az group create --name cloud-website-rg --location westeurope
+az group create --name %RG_NAME% --location francecentral
 if %ERRORLEVEL% neq 0 (
     echo FEHLER beim Erstellen der Resource Group!
     exit /b 1
@@ -24,7 +29,7 @@ echo --- Screenshot 1: Resource Group erstellt ---
 echo.
 echo === Phase B2: ARM Template deployen ===
 echo Dies kann 2-5 Minuten dauern...
-az deployment group create --resource-group cloud-website-rg --template-file azuredeploy.json --parameters @parameters.json
+az deployment group create --resource-group %RG_NAME% --template-file azuredeploy.json --parameters @parameters.json
 if %ERRORLEVEL% neq 0 (
     echo FEHLER beim Deployment! Siehe Troubleshooting in README.md
     exit /b 1
@@ -35,21 +40,21 @@ echo.
 echo === Phase B3: Website Content deployen ===
 echo Versuche ZIP-Deploy...
 powershell -Command "Compress-Archive -Path index.html -DestinationPath deploy.zip -Force"
-az webapp deployment source config-zip --resource-group cloud-website-rg --name azure-cloud-testwebsite --src deploy.zip
+az webapp deployment source config-zip --resource-group %RG_NAME% --name %WEBAPP_NAME% --src deploy.zip
 if %ERRORLEVEL% neq 0 (
     echo ZIP-Deploy fehlgeschlagen. Versuche direkten Deploy...
-    az webapp deploy --resource-group cloud-website-rg --name azure-cloud-testwebsite --src-path index.html --type static
+    az webapp deploy --resource-group %RG_NAME% --name %WEBAPP_NAME% --src-path index.html --type static
 )
 
 echo.
 echo === Phase B4: Website testen ===
-echo Website URL: https://azure-cloud-testwebsite.azurewebsites.net
+echo Website URL: https://%WEBAPP_NAME%.azurewebsites.net
 echo --- Screenshot 3: Website im Browser oeffnen ---
 
 echo.
 echo === Phase C: CDN pruefen ===
-az cdn endpoint show --resource-group cloud-website-rg --profile-name cloud-website-cdn --name CDN-azure-cloud --query "{hostname:hostName, resourceState:resourceState}" -o table
-echo CDN URL: https://CDN-azure-cloud.azureedge.net
+az cdn endpoint show --resource-group %RG_NAME% --profile-name %CDN_PROFILE% --name %CDN_ENDPOINT% --query "{hostname:hostName, resourceState:resourceState}" -o table
+echo CDN URL: https://%CDN_ENDPOINT%.azureedge.net
 echo HINWEIS: CDN-Propagation kann 10-30 Minuten dauern!
 echo --- Screenshot 4: CDN URL im Browser oeffnen (spaeter) ---
 
@@ -57,8 +62,8 @@ echo.
 echo === Deployment abgeschlossen! ===
 echo.
 echo Naechste Schritte:
-echo  1. Oeffne https://azure-cloud-testwebsite.azurewebsites.net im Browser
-echo  2. Warte 10-30 Min, dann oeffne https://CDN-azure-cloud.azureedge.net
+echo  1. Oeffne https://%WEBAPP_NAME%.azurewebsites.net im Browser
+echo  2. Warte 10-30 Min, dann oeffne https://%CDN_ENDPOINT%.azureedge.net
 echo  3. Oeffne Azure Portal fuer Application Insights Screenshots
 echo  4. Mache alle 7 Screenshots (siehe README.md)
 echo.

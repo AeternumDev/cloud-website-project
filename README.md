@@ -67,7 +67,7 @@ deploy.bat
 
 ```bash
 # Resource Group erstellen
-az group create --name cloud-website-rg --location westeurope
+az group create --name cloud-website-rg --location francecentral
 
 # ARM Template deployen (2-5 Minuten)
 az deployment group create --resource-group cloud-website-rg --template-file azuredeploy.json --parameters @parameters.json
@@ -82,7 +82,7 @@ az webapp deployment source config-zip --resource-group cloud-website-rg --name 
 - **Website:** https://azure-cloud-testwebsite.azurewebsites.net
 - **CDN:** https://CDN-azure-cloud.azureedge.net (10-30 Min Propagation)
 
-## Screenshots-Checkliste (Folie 9)
+## Screenshots-Checkliste für Deployment-Nachweis
 
 | Nr. | Was | Wo |
 |-----|-----|----|

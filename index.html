@@ -20,7 +20,55 @@
         }
         h1 { color: #0078d4; }
         .info { color: #666; margin-top: 20px; font-size: 14px; }
+        h2 {
+            color: #333;
+            margin-top: 25px;
+            font-size: 1.2em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background: #0078d4;
+            color: white;
+        }
+        tr:nth-child(even) { background: #f9f9f9; }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
     </style>
+    <script>
+      // Application Insights - Lightweight Page View Tracking
+      // Connection String wird serverseitig konfiguriert
+      // Für den PoC: Einfaches Fetch an AI Endpoint zur Registrierung von Page Views
+      (function() {
+        var sdkScript = document.createElement('script');
+        sdkScript.src = 'https://js.monitor.azure.com/scripts/b/ai.3.gbl.min.js';
+        sdkScript.crossOrigin = 'anonymous';
+        sdkScript.onload = function() {
+          var cfg = { connectionString: '' }; // Wird durch App Service App Setting überschrieben
+          if (window.Microsoft && Microsoft.ApplicationInsights) {
+            var appInsights = new Microsoft.ApplicationInsights.ApplicationInsights({ config: cfg });
+            appInsights.loadAppInsights();
+            appInsights.trackPageView();
+          }
+        };
+        document.head.appendChild(sdkScript);
+      })();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -29,10 +77,32 @@
         <p>Diese Seite wird über <strong>Azure App Service (Free F1)</strong> gehostet
            und über <strong>Azure CDN</strong> global verteilt.</p>
         <hr>
+
+        <h2>Cloud-Architektur</h2>
+        <p>Die Infrastruktur basiert auf einer mehrstufigen Architektur mit folgenden Komponenten:</p>
+        <table>
+            <tr><th>Komponente</th><th>Azure Service</th><th>Funktion</th></tr>
+            <tr><td>Webhosting</td><td>App Service (F1/S1)</td><td>Hosting der statischen Website</td></tr>
+            <tr><td>CDN</td><td>Azure CDN</td><td>Globale Inhaltsverteilung via Edge Server</td></tr>
+            <tr><td>Monitoring</td><td>Application Insights</td><td>Telemetrie und Performance-Tracking</td></tr>
+            <tr><td>Alerting</td><td>Azure Monitor</td><td>Metriken, Alerts und Dashboards</td></tr>
+            <tr><td>Skalierung</td><td>Auto-Scale (S1 Tier)</td><td>CPU-basiertes horizontales Scaling</td></tr>
+        </table>
+
+        <h2>Infrastructure as Code</h2>
+        <p>Die gesamte Infrastruktur wird über ein parametrisiertes <strong>ARM Template</strong>
+           (<code>azuredeploy.json</code>) definiert und ist vollständig reproduzierbar.
+           Der Upgrade-Pfad von Free F1 auf Standard S1 ist über einen einzigen Parameter
+           (<code>appServicePlanSku</code>) steuerbar.</p>
+
+        <h2>Sicherheitsmerkmale</h2>
+        <p>HTTPS-Only Enforcement, TLS 1.2 Minimum, FTPS deaktiviert, CDN mit
+           ausschließlich HTTPS-Zugriff.</p>
+
         <div class="info">
-            <p><strong>Architektur:</strong> App Service + CDN + Application Insights + Azure Monitor</p>
-            <p><strong>Infrastructure as Code:</strong> ARM Template (azuredeploy.json)</p>
             <p><strong>Tier:</strong> Free F1 (Proof of Concept) — Upgrade-Pfad zu Standard S1 parametrisiert</p>
+            <p><strong>Region:</strong> West Europe</p>
+            <p><strong>IaC:</strong> ARM Template mit Azure CLI Deployment</p>
         </div>
     </div>
 </body>

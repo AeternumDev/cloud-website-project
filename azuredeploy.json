@@ -50,7 +50,7 @@
     "autoScaleSettingsName": "[concat(parameters('appServicePlanName'), '-autoscale')]",
     "skuName": "[if(variables('isStandardTier'), 'S1', 'F1')]",
     "skuTier": "[if(variables('isStandardTier'), 'Standard', 'Free')]",
-    "skuCapacity": "[if(variables('isStandardTier'), 1, 1)]"
+    "logAnalyticsName": "[concat(parameters('webAppName'), '-logs')]"
   },
   "resources": [
     {
@@ -61,7 +61,7 @@
       "sku": {
         "name": "[variables('skuName')]",
         "tier": "[variables('skuTier')]",
-        "capacity": "[variables('skuCapacity')]"
+        "capacity": 1
       },
       "properties": {}
     },
@@ -94,14 +94,65 @@
       }
     },
     {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
       "name": "[variables('appInsightsName')]",
       "location": "[parameters('location')]",
       "kind": "web",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ],
       "properties": {
         "Application_Type": "web",
-        "RetentionInDays": 90
+        "RetentionInDays": 90,
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('cdnProfileName')]",
+      "location": "Global",
+      "sku": {
+        "name": "Standard_Microsoft"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/endpoints",
+      "apiVersion": "2021-06-01",
+      "name": "[concat(parameters('cdnProfileName'), '/', parameters('cdnEndpointName'))]",
+      "location": "Global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ],
+      "properties": {
+        "originHostHeader": "[concat(parameters('webAppName'), '.azurewebsites.net')]",
+        "isHttpAllowed": false,
+        "isHttpsAllowed": true,
+        "origins": [
+          {
+            "name": "appServiceOrigin",
+            "properties": {
+              "hostName": "[concat(parameters('webAppName'), '.azurewebsites.net')]",
+              "httpsPort": 443,
+              "originHostHeader": "[concat(parameters('webAppName'), '.azurewebsites.net')]"
+            }
+          }
+        ]
       }
     },
     {
@@ -175,7 +226,7 @@
     },
     "cdnEndpointUrl": {
       "type": "string",
-      "value": "[concat('https://', parameters('cdnEndpointName'), '.azureedge.net')]"
+      "value": "[concat('https://', reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))).hostName)]"
     },
     "appInsightsInstrumentationKey": {
       "type": "string",

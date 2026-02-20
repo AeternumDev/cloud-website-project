@@ -13,3 +13,16 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Node (falls npm genutzt wird)
+node_modules/
+
+# Azure Functions
+local.settings.json
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.tmp
