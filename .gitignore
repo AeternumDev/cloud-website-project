@@ -26,3 +26,11 @@ local.settings.json
 # Backup files
 *.bak
 *.tmp
+
+# Terraform (falls später migriert)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Environment files
+.env

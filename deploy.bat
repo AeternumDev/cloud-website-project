@@ -7,7 +7,7 @@ REM ============================================
 set WEBAPP_NAME=azure-cloud-testwebsite
 set RG_NAME=cloud-website-rg
 set CDN_PROFILE=cloud-website-cdn
-set CDN_ENDPOINT=CDN-azure-cloud
+set CDN_ENDPOINT=cdn-azure-cloud
 
 echo.
 echo === Phase A: Azure Login pruefen ===
@@ -19,12 +19,12 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo === Phase B1: Resource Group erstellen ===
-az group create --name %RG_NAME% --location francecentral
+az group create --name %RG_NAME% --location westeurope
 if %ERRORLEVEL% neq 0 (
     echo FEHLER beim Erstellen der Resource Group!
     exit /b 1
 )
-echo --- Screenshot 1: Resource Group erstellt ---
+REM Deployment-Schritt: Resource Group erstellt
 
 echo.
 echo === Phase B2: ARM Template deployen ===
@@ -34,7 +34,7 @@ if %ERRORLEVEL% neq 0 (
     echo FEHLER beim Deployment! Siehe Troubleshooting in README.md
     exit /b 1
 )
-echo --- Screenshot 2: Deployment Succeeded ---
+REM Deployment-Schritt: ARM Template erfolgreich deployed
 
 echo.
 echo === Phase B3: Website Content deployen ===
@@ -49,14 +49,12 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo === Phase B4: Website testen ===
 echo Website URL: https://%WEBAPP_NAME%.azurewebsites.net
-echo --- Screenshot 3: Website im Browser oeffnen ---
 
 echo.
 echo === Phase C: CDN pruefen ===
 az cdn endpoint show --resource-group %RG_NAME% --profile-name %CDN_PROFILE% --name %CDN_ENDPOINT% --query "{hostname:hostName, resourceState:resourceState}" -o table
 echo CDN URL: https://%CDN_ENDPOINT%.azureedge.net
 echo HINWEIS: CDN-Propagation kann 10-30 Minuten dauern!
-echo --- Screenshot 4: CDN URL im Browser oeffnen (spaeter) ---
 
 echo.
 echo === Deployment abgeschlossen! ===
@@ -64,6 +62,5 @@ echo.
 echo Naechste Schritte:
 echo  1. Oeffne https://%WEBAPP_NAME%.azurewebsites.net im Browser
 echo  2. Warte 10-30 Min, dann oeffne https://%CDN_ENDPOINT%.azureedge.net
-echo  3. Oeffne Azure Portal fuer Application Insights Screenshots
-echo  4. Mache alle 7 Screenshots (siehe README.md)
+echo  3. Oeffne Azure Portal fuer Application Insights und Monitor
 echo.

@@ -9,7 +9,7 @@
       "value": "F1"
     },
     "cdnEndpointName": {
-      "value": "CDN-azure-cloud"
+      "value": "cdn-azure-cloud"
     }
   }
 }

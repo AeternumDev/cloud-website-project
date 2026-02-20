@@ -1,6 +1,11 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "ARM Template für hochverfügbare Unternehmenswebsite — DLBSEPCP01_D",
+    "author": "Antonio",
+    "version": "1.0.0"
+  },
   "parameters": {
     "appServicePlanName": {
       "type": "string",
@@ -215,6 +220,25 @@
               }
             ]
           }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/providers/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[concat(parameters('webAppName'), '/Microsoft.Insights/diagnostics')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ],
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "logs": [
+          { "category": "AppServiceHTTPLogs", "enabled": true },
+          { "category": "AppServiceAppLogs", "enabled": true }
+        ],
+        "metrics": [
+          { "category": "AllMetrics", "enabled": true }
         ]
       }
     }

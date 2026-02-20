@@ -50,30 +50,17 @@
             font-size: 0.9em;
         }
     </style>
-    <script>
-      // Application Insights - Lightweight Page View Tracking
-      // Connection String wird serverseitig konfiguriert
-      // Für den PoC: Einfaches Fetch an AI Endpoint zur Registrierung von Page Views
-      (function() {
-        var sdkScript = document.createElement('script');
-        sdkScript.src = 'https://js.monitor.azure.com/scripts/b/ai.3.gbl.min.js';
-        sdkScript.crossOrigin = 'anonymous';
-        sdkScript.onload = function() {
-          var cfg = { connectionString: '' }; // Wird durch App Service App Setting überschrieben
-          if (window.Microsoft && Microsoft.ApplicationInsights) {
-            var appInsights = new Microsoft.ApplicationInsights.ApplicationInsights({ config: cfg });
-            appInsights.loadAppInsights();
-            appInsights.trackPageView();
-          }
-        };
-        document.head.appendChild(sdkScript);
-      })();
-    </script>
+    <!--
+      Application Insights: Serverseitiges Request-Tracking ist über die App Service
+      App Settings (APPINSIGHTS_INSTRUMENTATIONKEY / APPLICATIONINSIGHTS_CONNECTION_STRING)
+      automatisch aktiv. Clientseitiges Page-View-Tracking ist im Free F1 Tier nicht
+      über SDK-Injection verfügbar und wird daher im PoC nicht eingesetzt.
+    -->
 </head>
 <body>
     <div class="container">
         <h1>Hochverfügbare Unternehmenswebsite</h1>
-        <p>Cloud Programming Portfolio — DLBSEPCP01_D</p>
+        <p>Cloud Programming Portfolio — DLBSEPCP01_D — IU Internationale Hochschule</p>
         <p>Diese Seite wird über <strong>Azure App Service (Free F1)</strong> gehostet
            und über <strong>Azure CDN</strong> global verteilt.</p>
         <hr>

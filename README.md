@@ -1,147 +1,64 @@
-# Cloud Website Project — Azure Cloud-Architektur PoC
+﻿# Cloud-Architektur PoC — Hochverfügbare Unternehmenswebsite
 
-> **DLBSEPCP01_D** — Cloud Programming Portfolio  
-> Azure App Service + CDN + Application Insights + Azure Monitor
+Proof of Concept im Rahmen von **DLBSEPCP01_D** (Cloud Programming Portfolio), IU Internationale Hochschule. Die gesamte Infrastruktur wird über ein parametrisiertes ARM Template als Infrastructure as Code auf Microsoft Azure bereitgestellt.
 
 ---
+
+## Architektur-Übersicht
+
+Die Lösung integriert vier Azure-Dienste in einer mehrstufigen Architektur:
+
+- **Azure App Service (F1 / S1):** Hosting der statischen Website. Free F1 dient als PoC-Umgebung; der Upgrade-Pfad auf Standard S1 ist über einen einzigen Parameter in `parameters.json` steuerbar.
+- **Azure CDN:** Globale Inhaltsverteilung über Microsoft Edge-Knoten, HTTPS-Only.
+- **Application Insights + Log Analytics Workspace:** Serverseitiges Request-Tracking und Telemetrie, konfiguriert über App Service App Settings. Diagnostische Logs (HTTP- und App-Logs) werden an den Log Analytics Workspace weitergeleitet.
+- **Auto-Scale:** Bedingtes CPU-basiertes Horizontal-Scaling (1–3 Instanzen), aktiv nur beim S1 Tier.
 
 ## Projektstruktur
 
 ```
 cloud-website-project/
-├── index.html           # Website-Content (Unternehmenswebsite)
+├── index.html           # Website-Content
 ├── azuredeploy.json     # ARM Template (Infrastructure as Code)
 ├── parameters.json      # Deployment-Parameter (F1 Free Tier)
-├── deploy.bat           # Windows Deployment-Script
-├── deploy.sh            # Linux/Mac Deployment-Script
-├── cleanup.bat          # Aufräum-Script (nach Bewertung)
-├── .gitignore           # Git Ignore-Datei
-└── README.md            # Diese Datei
+├── deploy.bat           # Deployment-Script (Windows)
+├── deploy.sh            # Deployment-Script (Linux/Mac)
+├── .gitignore
+└── README.md
 ```
 
-## Voraussetzungen
+## Deployment
 
-1. **Azure for Students Account** aktiv: https://azure.microsoft.com/en-us/free/students
-2. **Azure CLI** installiert: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows
-3. **Git** installiert
-
-## Schnellstart
-
-### 1. Azure CLI installieren (falls noch nicht geschehen)
-
-```powershell
-# Option A: Via winget (empfohlen)
-winget install Microsoft.AzureCLI
-
-# Option B: MSI-Installer herunterladen
-# https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows
-```
-
-Nach der Installation **Terminal neu starten** und prüfen:
-```bash
-az --version
-```
-
-### 2. Anmelden
+**Voraussetzungen:** Azure for Students Account, Azure CLI
 
 ```bash
 az login
-az account show --query "{name:name, id:id, state:state}" -o table
 ```
-
-### 3. Provider registrieren (einmalig)
-
-```bash
-az provider register --namespace Microsoft.Cdn
-az provider register --namespace Microsoft.Insights
-```
-
-### 4. Deployen
 
 **Windows:**
 ```cmd
 deploy.bat
 ```
 
-**Oder manuell Schritt für Schritt:**
-
+**Linux/Mac:**
 ```bash
-# Resource Group erstellen
-az group create --name cloud-website-rg --location francecentral
-
-# ARM Template deployen (2-5 Minuten)
-az deployment group create --resource-group cloud-website-rg --template-file azuredeploy.json --parameters @parameters.json
-
-# Website deployen
-powershell -Command "Compress-Archive -Path index.html -DestinationPath deploy.zip -Force"
-az webapp deployment source config-zip --resource-group cloud-website-rg --name azure-cloud-testwebsite --src deploy.zip
+bash deploy.sh
 ```
 
-### 5. Testen
+## Sicherheitsmerkmale
 
-- **Website:** https://azure-cloud-testwebsite.azurewebsites.net
-- **CDN:** https://CDN-azure-cloud.azureedge.net (10-30 Min Propagation)
+- HTTPS-Only Enforcement für App Service und CDN
+- TLS 1.2 Minimum
+- FTPS deaktiviert
+- CDN ausschließlich HTTPS-Zugriff (`isHttpAllowed: false`)
 
-## Screenshots-Checkliste für Deployment-Nachweis
+## Upgrade-Pfad F1 → S1
 
-| Nr. | Was | Wo |
-|-----|-----|----|
-| 1 | Resource Group im Portal | Portal → Resource Groups |
-| 2 | ARM Deployment Succeeded | Terminal oder Portal → Deployments |
-| 3 | Laufende Website (*.azurewebsites.net) | Browser |
-| 4 | Website über CDN (*.azureedge.net) | Browser |
-| 5 | Application Insights Metriken | Portal → App Insights |
-| 6 | Azure Monitor Dashboard | Portal → Monitor |
-| 7 | Resource Group Übersicht alle Ressourcen | Portal → Resource Group |
+In `parameters.json` den Wert ändern:
 
-## Architektur
-
-```
-                    ┌─────────────────┐
-                    │   Azure CDN     │
-                    │ (Global Edge)   │
-                    └────────┬────────┘
-                             │
-                    ┌────────▼────────┐
-                    │  App Service    │
-                    │  (Free F1)     │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-     ┌────────▼───┐  ┌──────▼──────┐  ┌───▼──────────┐
-     │ App Insights│  │Azure Monitor│  │  AutoScale   │
-     │ (Telemetrie)│  │ (Metriken) │  │ (nur bei S1) │
-     └─────────────┘  └────────────┘  └──────────────┘
-```
-
-## Upgrade-Pfad (F1 → S1)
-
-Um von Free auf Standard umzustellen, ändere in `parameters.json`:
 ```json
 "appServicePlanSku": {
   "value": "S1"
 }
 ```
-Dann erneut deployen — AutoScaling wird automatisch aktiviert.
 
-## Troubleshooting
-
-| Problem | Lösung |
-|---------|--------|
-| `Microsoft.Cdn` nicht registriert | `az provider register --namespace Microsoft.Cdn` |
-| Website-Name existiert bereits | Anderen `webAppName` in parameters.json wählen |
-| CDN zeigt 404 | 15-30 Min warten, dann Cache purgen |
-| `az webapp deploy` fehlschlägt | ZIP-Deploy oder Kudu-Portal nutzen |
-| Application Insights leer | Website 5-10x aufrufen, 2-3 Min warten |
-
-### CDN Cache purgen
-```bash
-az cdn endpoint purge --resource-group cloud-website-rg --profile-name cloud-website-cdn --name CDN-azure-cloud --content-paths "/*"
-```
-
-## Aufräumen (nach Bewertung)
-
-```bash
-az group delete --name cloud-website-rg --yes --no-wait
-```
+Dann erneut deployen — Auto-Scale (CPU-Schwellwert 70 %, 1–3 Instanzen) wird automatisch aktiviert.

@@ -9,7 +9,7 @@ set -e
 WEBAPP_NAME="azure-cloud-testwebsite"
 RG_NAME="cloud-website-rg"
 CDN_PROFILE="cloud-website-cdn"
-CDN_ENDPOINT="CDN-azure-cloud"
+CDN_ENDPOINT="cdn-azure-cloud"
 
 echo ""
 echo "=== Phase A: Azure Login prüfen ==="
@@ -22,8 +22,8 @@ echo ""
 echo "=== Phase B1: Resource Group erstellen ==="
 az group create \
   --name $RG_NAME \
-  --location francecentral
-echo "--- Screenshot 1: Resource Group erstellt ---"
+  --location westeurope
+# Deployment-Schritt: Resource Group erstellt
 
 echo ""
 echo "=== Phase B2: ARM Template deployen ==="
@@ -32,7 +32,7 @@ az deployment group create \
   --resource-group $RG_NAME \
   --template-file azuredeploy.json \
   --parameters @parameters.json
-echo "--- Screenshot 2: Deployment Succeeded ---"
+# Deployment-Schritt: ARM Template erfolgreich deployed
 
 echo ""
 echo "=== Phase B3: Website Content deployen ==="
@@ -53,7 +53,6 @@ az webapp deployment source config-zip \
 echo ""
 echo "=== Phase B4: Website testen ==="
 echo "Website URL: https://$WEBAPP_NAME.azurewebsites.net"
-echo "--- Screenshot 3: Website im Browser öffnen ---"
 
 echo ""
 echo "=== Phase C: CDN prüfen ==="
@@ -65,7 +64,6 @@ az cdn endpoint show \
   -o table
 echo "CDN URL: https://$CDN_ENDPOINT.azureedge.net"
 echo "HINWEIS: CDN-Propagation kann 10-30 Minuten dauern!"
-echo "--- Screenshot 4: CDN URL im Browser öffnen (später) ---"
 
 echo ""
 echo "=== Deployment abgeschlossen! ==="
@@ -73,6 +71,5 @@ echo ""
 echo "Nächste Schritte:"
 echo "  1. Öffne https://$WEBAPP_NAME.azurewebsites.net im Browser"
 echo "  2. Warte 10-30 Min, dann öffne https://$CDN_ENDPOINT.azureedge.net"
-echo "  3. Öffne Azure Portal für Application Insights Screenshots"
-echo "  4. Mache alle 7 Screenshots (siehe README.md)"
+echo "  3. Öffne Azure Portal für Application Insights und Monitor"
 echo ""
