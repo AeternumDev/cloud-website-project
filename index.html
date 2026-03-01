@@ -3,98 +3,738 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unternehmenswebsite — Cloud Programming PoC</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 { color: #0078d4; }
-        .info { color: #666; margin-top: 20px; font-size: 14px; }
-        h2 {
-            color: #333;
-            margin-top: 25px;
-            font-size: 1.2em;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            text-align: left;
-        }
-        th {
-            background: #0078d4;
-            color: white;
-        }
-        tr:nth-child(even) { background: #f9f9f9; }
-        code {
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-    </style>
+    <title>ProkrastiMate™ — The Productivity Suite Built for the Way IU Students Actually Work</title>
     <!--
       Application Insights: Serverseitiges Request-Tracking ist über die App Service
       App Settings (APPINSIGHTS_INSTRUMENTATIONKEY / APPLICATIONINSIGHTS_CONNECTION_STRING)
       automatisch aktiv. Clientseitiges Page-View-Tracking ist im Free F1 Tier nicht
       über SDK-Injection verfügbar und wird daher im PoC nicht eingesetzt.
-      
+
       Sicherheitshinweis: Keine sensitiven Daten (API-Keys, Connection Strings) werden
       im clientseitigen HTML exponiert. Alle Telemetrie-Konfigurationen laufen über
       serverseitige App Settings, die von Azure verwaltet werden.
     -->
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --black:  #111111;
+            --white:  #ffffff;
+            --off:    #f5f2ed;
+            --mid:    #7a7369;
+            --border: #ddd9d3;
+            --red:    #e8320a;
+            --font:   'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font);
+            color: var(--black);
+            background: var(--white);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* ── Navigation ─────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 60px;
+        }
+
+        .nav-logo {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            color: var(--black);
+        }
+
+        .nav-logo span { color: var(--red); }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 36px;
+        }
+
+        nav ul a {
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--mid);
+            transition: color 0.15s;
+        }
+
+        nav ul a:hover { color: var(--black); }
+
+        /* ── Hero ───────────────────────────────────── */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 48px 80px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero-label {
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--mid);
+            margin-bottom: 24px;
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 5vw, 72px);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            max-width: 820px;
+            margin-bottom: 32px;
+        }
+
+        .hero-title em {
+            font-style: normal;
+            color: var(--red);
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--mid);
+            max-width: 540px;
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 13px 28px;
+            font-size: 13px;
+            font-family: var(--font);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: 1.5px solid var(--black);
+            color: var(--black);
+            background: transparent;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .btn:hover { background: var(--black); color: var(--white); }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--white);
+            margin-right: 12px;
+        }
+
+        .btn-primary:hover { background: var(--red); border-color: var(--red); }
+
+        /* ── Sections ───────────────────────────────── */
+        section {
+            padding: 96px 48px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section:nth-child(even) { background: var(--off); }
+
+        .section-label {
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--mid);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(24px, 3vw, 40px);
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin-bottom: 48px;
+            max-width: 600px;
+        }
+
+        /* ── Services grid ──────────────────────────── */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .service-item {
+            background: var(--white);
+            padding: 36px 32px;
+        }
+
+        #features .service-item { background: var(--off); }
+
+        .service-num {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--mid);
+            margin-bottom: 20px;
+        }
+
+        .service-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .service-desc {
+            font-size: 14px;
+            color: var(--mid);
+            line-height: 1.7;
+        }
+
+        /* ── About ──────────────────────────────────── */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: start;
+        }
+
+        .about-text p {
+            color: var(--mid);
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .about-text p:last-child { margin-bottom: 0; }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            align-self: start;
+        }
+
+        .stat {
+            background: var(--white);
+            padding: 28px 24px;
+        }
+
+        .stat-num {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--mid);
+            letter-spacing: 0.04em;
+        }
+
+        /* ── References ─────────────────────────────── */
+        .ref-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-bottom: 48px;
+        }
+
+        .ref-item {
+            background: var(--off);
+            padding: 28px 24px;
+            font-size: 14px;
+        }
+
+        .ref-name {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .ref-detail {
+            font-size: 12px;
+            color: var(--mid);
+            line-height: 1.6;
+        }
+
+        /* ── Contact ────────────────────────────────── */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+        }
+
+        .contact-info p {
+            font-size: 15px;
+            color: var(--mid);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .contact-detail { margin-top: 32px; }
+
+        .contact-detail dt {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--mid);
+            margin-bottom: 4px;
+            margin-top: 20px;
+        }
+
+        .contact-detail dd {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .contact-form input,
+        .contact-form textarea,
+        .contact-form select {
+            font-family: var(--font);
+            font-size: 14px;
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--black);
+            outline: none;
+            appearance: none;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus,
+        .contact-form select:focus { border-color: var(--black); }
+
+        .contact-form textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        /* ── Footer ─────────────────────────────────── */
+        footer {
+            padding: 40px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--mid);
+        }
+
+        footer a { color: var(--mid); text-decoration: none; }
+        footer a:hover { color: var(--black); }
+
+        .footer-links { display: flex; gap: 24px; }
+
+        /* ── Pricing ────────────────────────────────── */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .pricing-card {
+            background: var(--white);
+            padding: 36px 32px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-card.featured {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .pricing-card.featured .pricing-mid,
+        .pricing-card.featured .pricing-feature { color: #aaa; }
+
+        .pricing-tier {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--mid);
+            margin-bottom: 8px;
+        }
+
+        .pricing-card.featured .pricing-tier { color: #888; }
+
+        .pricing-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .pricing-mid {
+            font-size: 12px;
+            color: var(--mid);
+            font-style: italic;
+            margin-bottom: 24px;
+        }
+
+        .pricing-price {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .pricing-period {
+            font-size: 12px;
+            color: var(--mid);
+            margin-bottom: 28px;
+        }
+
+        .pricing-card.featured .pricing-period { color: #888; }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+            flex: 1;
+        }
+
+        .pricing-feature {
+            font-size: 13px;
+            color: var(--mid);
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.5;
+        }
+
+        .pricing-card.featured .pricing-feature { border-color: #333; }
+
+        .pricing-feature:first-child { border-top: 1px solid var(--border); }
+        .pricing-card.featured .pricing-feature:first-child { border-color: #333; }
+
+        .pricing-badge {
+            display: inline-block;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: var(--red);
+            color: white;
+            padding: 2px 7px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* ── Testimonials ───────────────────────────── */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .testimonial {
+            background: var(--white);
+            padding: 32px;
+            font-size: 14px;
+        }
+
+        #stimmen .testimonial { background: var(--off); }
+
+        .testimonial blockquote {
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            color: var(--black);
+        }
+
+        .testimonial cite {
+            font-style: normal;
+            font-size: 12px;
+            color: var(--mid);
+            letter-spacing: 0.04em;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Hochverfügbare Unternehmenswebsite</h1>
-        <p>Cloud Programming Portfolio — DLBSEPCP01_D — IU Internationale Hochschule</p>
-        <p>Diese Seite wird über <strong>Azure App Service (Free F1)</strong> gehostet
-           und über <strong>Azure CDN</strong> global verteilt.</p>
-        <hr>
 
-        <h2>Cloud-Architektur</h2>
-        <p>Die Infrastruktur basiert auf einer mehrstufigen Architektur mit folgenden Komponenten:</p>
-        <table>
-            <tr><th>Komponente</th><th>Azure Service</th><th>Funktion</th></tr>
-            <tr><td>Webhosting</td><td>App Service (F1/S1)</td><td>Hosting der statischen Website</td></tr>
-            <tr><td>CDN</td><td>Azure CDN</td><td>Globale Inhaltsverteilung via Edge Server</td></tr>
-            <tr><td>Monitoring</td><td>Application Insights</td><td>Telemetrie und Performance-Tracking</td></tr>
-            <tr><td>Alerting</td><td>Azure Monitor</td><td>Metriken, Alerts und Dashboards</td></tr>
-            <tr><td>Skalierung</td><td>Auto-Scale (S1 Tier)</td><td>CPU-basiertes horizontales Scaling</td></tr>
-        </table>
+<nav>
+    <a href="#hero" class="nav-logo">PROKRASTI<span>MATE</span></a>
+    <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#unternehmen">Über uns</a></li>
+        <li><a href="#preise">Preise</a></li>
+        <li><a href="#stimmen">Stimmen</a></li>
+        <li><a href="#demo">Demo</a></li>
+    </ul>
+</nav>
 
-        <h2>Infrastructure as Code</h2>
-        <p>Die gesamte Infrastruktur wird über ein parametrisiertes <strong>ARM Template</strong>
-           (<code>azuredeploy.json</code>) definiert und ist vollständig reproduzierbar.
-           Der Upgrade-Pfad von Free F1 auf Standard S1 ist über einen einzigen Parameter
-           (<code>appServicePlanSku</code>) steuerbar.</p>
+<section id="hero">
+    <p class="hero-label">ProkrastiMate™ — Academic Crisis Management Software — gegr. 2023 in einem Airbnb in Erfurt</p>
+    <h1 class="hero-title">Endlich eine App, die versteht wie<br>IU-Studium <em>wirklich</em> läuft.</h1>
+    <p class="hero-sub">
+        Das erste SaaS für Deadline-Management, Entschuldigungs-Automatisierung
+        und emotionale Stabilität im Fernstudium. Vertraut von 47.000 Studierenden,
+        die es eigentlich gar nicht nötig haben.
+    </p>
+    <div>
+        <a href="#demo" class="btn btn-primary">Jetzt kostenlos panikieren</a>
+        <a href="#features" class="btn">Features entdecken</a>
+    </div>
+</section>
 
-        <h2>Sicherheitsmerkmale</h2>
-        <p>HTTPS-Only Enforcement, TLS 1.2 Minimum, FTPS deaktiviert, CDN mit
-           ausschließlich HTTPS-Zugriff.</p>
-
-        <div class="info">
-            <p><strong>Tier:</strong> Free F1 (Proof of Concept) — Upgrade-Pfad zu Standard S1 parametrisiert</p>
-            <p><strong>Region:</strong> West Europe</p>
-            <p><strong>IaC:</strong> ARM Template mit Azure CLI Deployment</p>
+<section id="features">
+    <p class="section-label">Was wir tun</p>
+    <h2 class="section-title">Features</h2>
+    <div class="services-grid">
+        <div class="service-item">
+            <p class="service-num">01</p>
+            <h3 class="service-title">Deadline Panic Mode™</h3>
+            <p class="service-desc">Aktiviert sich automatisch 4 Stunden vor Abgabe. Sortiert Aufgaben in "unvermeidbar", "vielleicht" und "das macht der nächste Versuch".</p>
+        </div>
+        <div class="service-item">
+            <p class="service-num">02</p>
+            <h3 class="service-title">KI-Entschuldigungs-Engine</h3>
+            <p class="service-desc">Generiert medizinisch plausible Krankmeldungs-Templates in 14 Sprachen. Erfolgsquote: 94 %. Für wiederholte Magenprobleme nicht geeignet.</p>
+        </div>
+        <div class="service-item">
+            <p class="service-num">03</p>
+            <h3 class="service-title">Tutor-Existenz-Prüfung™</h3>
+            <p class="service-desc">Verifiziert mittels drei unabhängiger APIs, ob Ihr zugewiesener Tutor tatsächlich existiert. Aktuelle Trefferquote: 97,3 %.</p>
+        </div>
+        <div class="service-item">
+            <p class="service-num">04</p>
+            <h3 class="service-title">ECTS-Roulette</h3>
+            <p class="service-desc">Monte-Carlo-Simulation Ihrer Abschlusswahrscheinlichkeit. Berücksichtigt Panic-Score, Schlafstunden der letzten 72h und Kaffeeverbrauch.</p>
+        </div>
+        <div class="service-item">
+            <p class="service-num">05</p>
+            <h3 class="service-title">Hausarbeit-Titleizer</h3>
+            <p class="service-desc">Aus drei Buzzwords generieren wir einen akademisch klingenden Titel. Inkl. Lorem-Ipsum-Abstract auf Wunsch. Für DLBSEPCP01_D optimiert.</p>
+        </div>
+        <div class="service-item">
+            <p class="service-num">06</p>
+            <h3 class="service-title">Ghosting-Detektor</h3>
+            <p class="service-desc">Erkennt, wenn Ihre Lerngruppe still aufgehört hat zu existieren — typischerweise 48 Stunden bevor die erste gemeinsame Aufgabe fällig ist.</p>
         </div>
     </div>
+</section>
+
+<section id="unternehmen">
+    <p class="section-label">Die Geschichte</p>
+    <h2 class="section-title">Über ProkrastiMate</h2>
+    <div class="about-grid">
+        <div class="about-text">
+            <p>
+                ProkrastiMate wurde 2023 von Kevin Schreier und Tanvir Osei gegründet —
+                beide IU-Studierende im 9. Semester (ursprünglich geplant: 5. Semester).
+                Die Idee entstand während einer dreistündigen Microsoft Teams-Sitzung,
+                von der niemand wusste, wozu sie eigentlich dienen sollte.
+            </p>
+            <p>
+                Das Unternehmen hat derzeit 4 Vollzeitmitarbeiter, einen Praktikanten namens
+                Felix (unbezahlt, aber mit Netflix-Zugang) und eine KI-gestützte HR-Abteilung,
+                die bislang unbemerkt alle Einstellungsentscheidungen trifft.
+            </p>
+            <p>
+                Wir haben bisher keine Förderung vom BMBF erhalten, stehen aber auf mehreren
+                Wartelisten. Unser Pitch Deck wurde von 14 VCs abgelehnt. Wir machen weiter.
+            </p>
+        </div>
+        <div class="about-stats">
+            <div class="stat">
+                <p class="stat-num">47k</p>
+                <p class="stat-label">Aktive Studierende</p>
+            </div>
+            <div class="stat">
+                <p class="stat-num">11&thinsp;min</p>
+                <p class="stat-label">Ø Vorlaufzeit vor Abgabe</p>
+            </div>
+            <div class="stat">
+                <p class="stat-num">94&thinsp;%</p>
+                <p class="stat-label">Entschuldigungs-Erfolgsquote</p>
+            </div>
+            <div class="stat">
+                <p class="stat-num">9</p>
+                <p class="stat-label">Ø Semester bis Abschluss</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="preise">
+    <p class="section-label">Transparente Preise</p>
+    <h2 class="section-title">Wählen Sie Ihr Leidensniveau</h2>
+    <div class="pricing-grid">
+        <div class="pricing-card">
+            <p class="pricing-tier">Einstieg</p>
+            <p class="pricing-name">Existenzielle Erschöpfung</p>
+            <p class="pricing-mid">Für Menschen, die noch Hoffnung haben</p>
+            <p class="pricing-price">0&thinsp;€</p>
+            <p class="pricing-period">für immer kostenlos</p>
+            <ul class="pricing-features">
+                <li class="pricing-feature">1× Panic Mode pro Monat</li>
+                <li class="pricing-feature">3 Entschuldigungs-Templates (Standard: Erkältung)</li>
+                <li class="pricing-feature">ECTS-Roulette (max. 3 Würfe)</li>
+                <li class="pricing-feature">Tutor-Prüfung (nur Textstatus)</li>
+                <li class="pricing-feature">Ghosting-Detektor für 1 Lerngruppe</li>
+            </ul>
+            <a href="#demo" class="btn">Kostenlos starten</a>
+        </div>
+        <div class="pricing-card featured">
+            <p class="pricing-tier">Beliebtester Plan</p>
+            <p class="pricing-name">Milde Panik <span class="pricing-badge">Popular</span></p>
+            <p class="pricing-mid">Für Studierende im 4.–8. Semester</p>
+            <p class="pricing-price">7,99&thinsp;€</p>
+            <p class="pricing-period">pro Monat, monatlich kündbar</p>
+            <ul class="pricing-features">
+                <li class="pricing-feature">Unbegrenzter Panic Mode</li>
+                <li class="pricing-feature">50 Templates inkl. "Beerdigung" und "IT-Totalausfall"</li>
+                <li class="pricing-feature">Vollständiges ECTS-Roulette</li>
+                <li class="pricing-feature">Hausarbeit-Titleizer (bis 5 Titel/Tag)</li>
+                <li class="pricing-feature">Ghosting-Detektor (unbegrenzte Gruppen)</li>
+            </ul>
+            <a href="#demo" class="btn" style="border-color:white; color:white;">Jetzt upgraden</a>
+        </div>
+        <div class="pricing-card">
+            <p class="pricing-tier">Fortgeschritten</p>
+            <p class="pricing-name">Totale Dissoziation</p>
+            <p class="pricing-mid">Für Profis ab dem 10. Semester</p>
+            <p class="pricing-price">24,99&thinsp;€</p>
+            <p class="pricing-period">pro Monat, Jahresabo verfügbar</p>
+            <ul class="pricing-features">
+                <li class="pricing-feature">Alles aus Milde Panik</li>
+                <li class="pricing-feature">API-Zugriff für eigene Automatisierungen</li>
+                <li class="pricing-feature">Prüfungsanmelde-Erinnerung (inkl. "zu spät"-Alarm)</li>
+                <li class="pricing-feature">VPN mit deutschen Exit-Nodes</li>
+                <li class="pricing-feature">Priority-Support (&lt; 72h Antwortzeit)</li>
+            </ul>
+            <a href="#demo" class="btn">Enterprise anfragen</a>
+        </div>
+    </div>
+</section>
+
+<section id="stimmen">
+    <p class="section-label">Echte Menschen, echte Krisen</p>
+    <h2 class="section-title">Was unsere Nutzer sagen</h2>
+    <div class="testimonials-grid">
+        <div class="testimonial">
+            <blockquote>
+                „Ich habe mein DLBSEPCP01_D-Portfolio genau 12 Minuten vor Abgabe eingereicht.
+                ProkrastiMate hat mich da hingebracht. Ich weine immer noch ein bisschen."
+            </blockquote>
+            <cite>Kevin T., 8. Semester Wirtschaftsinformatik</cite>
+        </div>
+        <div class="testimonial">
+            <blockquote>
+                „Der Tutor-Existenz-Check hat mir zwei Wochen Wartezeit erspart.
+                Die KI hat Recht gehabt. Er existiert. Er antwortet nur nicht."
+            </blockquote>
+            <cite>Melanie R., 6. Semester BWL</cite>
+        </div>
+        <div class="testimonial">
+            <blockquote>
+                „Das Template 'IT-Totalausfall beim Upload' hat mich durch drei
+                aufeinanderfolgende Prüfungsperioden gerettet. Ich empfehle es
+                niemandem. Aber ich benutze es weiter."
+            </blockquote>
+            <cite>Anonym, Wirtschaftspsychologie</cite>
+        </div>
+        <div class="testimonial">
+            <blockquote>
+                „ECTS-Roulette sagte mir bei 72 % Wahrscheinlichkeit 'Abschluss nicht empfehlenswert'.
+                Ich bin jetzt im 11. Semester. Die KI wusste es vorher."
+            </blockquote>
+            <cite>Lars M., Maschinenbau (läuft noch)</cite>
+        </div>
+    </div>
+</section>
+
+<section id="demo">
+    <p class="section-label">Loslegen</p>
+    <h2 class="section-title">Demo anfragen</h2>
+    <div class="contact-grid">
+        <div class="contact-info">
+            <p>
+                Füllen Sie das Formular aus und wir melden uns innerhalb von
+                2–5 Werktagen. Wahrscheinlich. Wir sind auch IU-Absolventen.
+            </p>
+            <dl class="contact-detail">
+                <dt>Hauptsitz</dt>
+                <dd>Somewhere in Berlin, vermutlich</dd>
+                <dt>Support-E-Mail</dt>
+                <dd>hilfe@prokrastimail.de</dd>
+                <dt>Notfall-Hotline</dt>
+                <dd>Nicht verfügbar. Wir schlafen.</dd>
+                <dt>LinkedIn</dt>
+                <dd>prokrastimatehq (23 Follower)</dd>
+            </dl>
+        </div>
+        <form class="contact-form" onsubmit="return false;">
+            <div class="form-row">
+                <input type="text" placeholder="Vorname" />
+                <input type="text" placeholder="Nachname" />
+            </div>
+            <input type="email" placeholder="IU-E-Mail-Adresse" />
+            <input type="text" placeholder="Matrikelnummer (optional, wir fragen nur)" />
+            <select>
+                <option value="" disabled selected>Studiengang wählen …</option>
+                <option>Wirtschaftsinformatik</option>
+                <option>BWL</option>
+                <option>Informatik</option>
+                <option>Wirtschaftspsychologie</option>
+                <option>Maschinenbau (läuft noch)</option>
+                <option>Anderes (auch gut)</option>
+            </select>
+            <select>
+                <option value="" disabled selected>Aktueller Panic-Score …</option>
+                <option>1 — Alles unter Kontrolle (Lüge)</option>
+                <option>3 — Leichte Unruhe</option>
+                <option>5 — Milde Panik</option>
+                <option>7 — Aktive Krise</option>
+                <option>10 — Systemausfall</option>
+            </select>
+            <textarea placeholder="Was genau brennt gerade? (Freitextfeld, kein Urteil)"></textarea>
+            <div>
+                <button type="submit" class="btn btn-primary">Demo anfragen</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<footer>
+    <span>© 2026 ProkrastiMate GmbH — vermutlich Berlin — nicht steuerlich geprüft</span>
+    <div class="footer-links">
+        <a href="#">Impressum</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">AGB (34 Seiten)</a>
+    </div>
+</footer>
+
 </body>
 </html>
