@@ -55,6 +55,10 @@
       App Settings (APPINSIGHTS_INSTRUMENTATIONKEY / APPLICATIONINSIGHTS_CONNECTION_STRING)
       automatisch aktiv. Clientseitiges Page-View-Tracking ist im Free F1 Tier nicht
       über SDK-Injection verfügbar und wird daher im PoC nicht eingesetzt.
+      
+      Sicherheitshinweis: Keine sensitiven Daten (API-Keys, Connection Strings) werden
+      im clientseitigen HTML exponiert. Alle Telemetrie-Konfigurationen laufen über
+      serverseitige App Settings, die von Azure verwaltet werden.
     -->
 </head>
 <body>

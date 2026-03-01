@@ -3,6 +3,13 @@ REM ============================================
 REM  Azure Cloud Website - Deployment Script
 REM  Führe dieses Script nach "az login" aus
 REM ============================================
+REM Prüfe ob Azure CLI im PATH ist
+where az >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo FEHLER: Azure CLI nicht im PATH gefunden!
+    echo Installiere Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+    exit /b 1
+)
 
 set WEBAPP_NAME=azure-cloud-testwebsite
 set RG_NAME=cloud-website-rg

@@ -5,6 +5,8 @@
 # ============================================
 
 set -e
+# Prüfe ob Azure CLI installiert ist
+command -v az >/dev/null 2>&1 || { echo "FEHLER: Azure CLI nicht installiert. Siehe https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"; exit 1; }
 
 WEBAPP_NAME="azure-cloud-testwebsite"
 RG_NAME="cloud-website-rg"
