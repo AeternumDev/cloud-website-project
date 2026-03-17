@@ -10,6 +10,15 @@
     },
     "cdnEndpointName": {
       "value": "cdn-azure-cloud"
+    },
+    "enableCdn": {
+      "value": false
+    },
+    "appServicePlanCapacity": {
+      "value": 1
+    },
+    "logRetentionInDays": {
+      "value": 30
     }
   }
 }

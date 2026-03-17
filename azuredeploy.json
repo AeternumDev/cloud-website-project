@@ -10,14 +10,18 @@
     "appServicePlanName": {
       "type": "string",
       "defaultValue": "cloud-website-plan",
+      "minLength": 2,
+      "maxLength": 60,
       "metadata": {
-        "description": "Name des App Service Plans"
+        "description": "Name des App Service Plans. Muss zwischen 2 und 60 Zeichen lang sein."
       }
     },
     "webAppName": {
       "type": "string",
+      "minLength": 2,
+      "maxLength": 60,
       "metadata": {
-        "description": "Eindeutiger Name der Web App (wird Teil der URL)"
+        "description": "Eindeutiger Name der Web App (wird Teil der URL). Muss zwischen 2 und 60 Zeichen lang sein."
       }
     },
     "location": {
@@ -44,8 +48,45 @@
     },
     "cdnEndpointName": {
       "type": "string",
+      "defaultValue": "cdn-azure-cloud",
       "metadata": {
         "description": "Eindeutiger Name des CDN Endpoints"
+      }
+    },
+    "enableCdn": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "CDN-Bereitstellung aktivieren. Auf 'false' gesetzt, da Azure for Students keine CDN/Front Door-Ressourcen unterstützt. Bei einem Upgrade auf ein bezahltes Abonnement auf 'true' setzen."
+      }
+    },
+    "appServicePlanCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Anzahl der Instanzen im App Service Plan. Bei F1 Tier ist nur 1 erlaubt, bei S1 bis zu 10."
+      }
+    },
+    "logRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 7,
+      "maxValue": 365,
+      "metadata": {
+        "description": "Aufbewahrungsdauer für Logs und Metriken in Tagen. Gilt einheitlich für Application Insights und Log Analytics Workspace."
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "defaultValue": {
+        "project": "cloud-website-portfolio",
+        "environment": "proof-of-concept",
+        "owner": "Antonio Prinz"
+      },
+      "metadata": {
+        "description": "Tags für alle Ressourcen zur Governance und Kostenkontrolle."
       }
     }
   },
@@ -63,10 +104,11 @@
       "apiVersion": "2022-09-01",
       "name": "[parameters('appServicePlanName')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "sku": {
         "name": "[variables('skuName')]",
         "tier": "[variables('skuTier')]",
-        "capacity": 1
+        "capacity": "[if(variables('isStandardTier'), parameters('appServicePlanCapacity'), 1)]"
       },
       "properties": {}
     },
@@ -75,6 +117,7 @@
       "apiVersion": "2022-09-01",
       "name": "[parameters('webAppName')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
         "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
@@ -103,11 +146,12 @@
       "apiVersion": "2022-10-01",
       "name": "[variables('logAnalyticsName')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "properties": {
         "sku": {
           "name": "PerGB2018"
         },
-        "retentionInDays": 30
+        "retentionInDays": "[parameters('logRetentionInDays')]"
       }
     },
     {
@@ -116,48 +160,47 @@
       "name": "[variables('appInsightsName')]",
       "location": "[parameters('location')]",
       "kind": "web",
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
       ],
       "properties": {
         "Application_Type": "web",
-        "RetentionInDays": 90,
+        "RetentionInDays": "[parameters('logRetentionInDays')]",
         "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
       }
     },
     {
+      "condition": "[parameters('enableCdn')]",
       "type": "Microsoft.Cdn/profiles",
-      "apiVersion": "2021-06-01",
+      "apiVersion": "2023-05-01",
       "name": "[parameters('cdnProfileName')]",
       "location": "Global",
+      "tags": "[parameters('resourceTags')]",
+      "metadata": {
+        "comment": "Location 'Global' gemäß Azure-Spezifikation für CDN-Ressourcen. Bedingt deploybar über 'enableCdn'-Parameter, da Azure for Students keine CDN-Ressourcen unterstützt."
+      },
       "sku": {
-        "name": "Standard_Microsoft"
+        "name": "Standard_AzureFrontDoor"
       },
       "properties": {}
     },
     {
-      "type": "Microsoft.Cdn/profiles/endpoints",
-      "apiVersion": "2021-06-01",
+      "condition": "[parameters('enableCdn')]",
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2023-05-01",
       "name": "[concat(parameters('cdnProfileName'), '/', parameters('cdnEndpointName'))]",
       "location": "Global",
+      "tags": "[parameters('resourceTags')]",
+      "metadata": {
+        "comment": "Location 'Global' gemäß Azure-Spezifikation für CDN-Ressourcen."
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]",
         "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
       ],
       "properties": {
-        "originHostHeader": "[concat(parameters('webAppName'), '.azurewebsites.net')]",
-        "isHttpAllowed": false,
-        "isHttpsAllowed": true,
-        "origins": [
-          {
-            "name": "appServiceOrigin",
-            "properties": {
-              "hostName": "[concat(parameters('webAppName'), '.azurewebsites.net')]",
-              "httpsPort": 443,
-              "originHostHeader": "[concat(parameters('webAppName'), '.azurewebsites.net')]"
-            }
-          }
-        ]
+        "enabledState": "Enabled"
       }
     },
     {
@@ -166,6 +209,7 @@
       "apiVersion": "2022-10-01",
       "name": "[variables('autoScaleSettingsName')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
       ],
@@ -249,8 +293,9 @@
       "value": "[concat('https://', parameters('webAppName'), '.azurewebsites.net')]"
     },
     "cdnEndpointUrl": {
+      "condition": "[parameters('enableCdn')]",
       "type": "string",
-      "value": "[concat('https://', reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))).hostName)]"
+      "value": "[if(parameters('enableCdn'), concat('https://', reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))).hostName), 'CDN nicht aktiviert')]"
     },
     "appInsightsInstrumentationKey": {
       "type": "string",
@@ -259,6 +304,18 @@
     "currentSku": {
       "type": "string",
       "value": "[parameters('appServicePlanSku')]"
+    },
+    "appInsightsPortalUrl": {
+      "type": "string",
+      "value": "[concat('https://portal.azure.com/#resource', resourceId('Microsoft.Insights/components', variables('appInsightsName')), '/overview')]"
+    },
+    "logAnalyticsPortalUrl": {
+      "type": "string",
+      "value": "[concat('https://portal.azure.com/#resource', resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName')), '/overview')]"
+    },
+    "resourceGroupPortalUrl": {
+      "type": "string",
+      "value": "[concat('https://portal.azure.com/#resource/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/overview')]"
     }
   }
 }
