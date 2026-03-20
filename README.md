@@ -2,6 +2,8 @@
 
 **Portfolioprojekt DLBSEPCP01_D** — Cloud Programming, IU Internationale Hochschule
 
+https://azure-cloud-testwebsite.azurewebsites.net/
+
 ## Projektübersicht
 
 Dieses Repository enthält die Infrastructure-as-Code-Implementierung einer hochverfügbaren Unternehmenswebsite auf Microsoft Azure. Die gesamte Cloud-Infrastruktur ist als parametrisiertes ARM Template definiert und über die Azure CLI reproduzierbar bereitstellbar.
