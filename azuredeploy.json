@@ -137,7 +137,9 @@
             }
           ],
           "ftpsState": "Disabled",
-          "minTlsVersion": "1.2"
+          "minTlsVersion": "1.2",
+          "http20Enabled": true,
+          "phpVersion": ""
         }
       }
     },
