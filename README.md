@@ -1,35 +1,36 @@
-﻿# Cloud-Architektur für eine hochverfügbare Unternehmenswebsite
+# Cloud-Architektur für eine hochverfügbare Unternehmenswebsite
 
 **Portfolioprojekt DLBSEPCP01_D** — Cloud Programming, IU Internationale Hochschule
 
-https://azure-cloud-testwebsite.azurewebsites.net/
+🔗 [Live-Demo](https://azure-cloud-testwebsite.azurewebsites.net/)
+
+---
 
 ## Projektübersicht
 
-Dieses Repository enthält die Infrastructure-as-Code-Implementierung einer hochverfügbaren Unternehmenswebsite auf Microsoft Azure. Die gesamte Cloud-Infrastruktur ist als parametrisiertes ARM Template definiert und über die Azure CLI reproduzierbar bereitstellbar.
+Infrastructure-as-Code-Implementierung einer hochverfügbaren Unternehmenswebsite auf Microsoft Azure. Die gesamte Cloud-Infrastruktur ist als parametrisiertes ARM Template definiert und über die Azure CLI reproduzierbar bereitstellbar.
+
+---
 
 ## Architektur
-
-Die Lösung integriert vier Azure-Dienste in einer mehrstufigen Architektur:
 
 | Komponente | Azure-Dienst | Funktion |
 |---|---|---|
 | Webhosting | App Service (F1/S1) | Hosting der statischen Website |
-| CDN | Azure Front Door Standard (bedingt) | Globale Inhaltsverteilung über Edge-Knoten |
-| Monitoring | Application Insights + Log Analytics | Serverseitiges Request-Tracking und Telemetrie |
-| Skalierung | Auto-Scale (bedingt, S1 Tier) | CPU-basiertes horizontales Scaling (1–3 Instanzen) |
+| CDN | Azure Front Door Standard *(bedingt)* | Globale Inhaltsverteilung über Edge-Knoten |
+| Monitoring | Application Insights + Log Analytics | Request-Tracking und Telemetrie |
+| Skalierung | Auto-Scale *(bedingt, S1 Tier)* | CPU-basiertes horizontales Scaling (1–3 Instanzen) |
 
-### Strategischer Ansatz: F1 Free → S1 Upgrade-Pfad
+### F1 Free → S1 Upgrade-Pfad
 
 Aufgrund des begrenzten Azure-for-Students-Budgets (100 EUR) wurde eine zweistufige Strategie gewählt:
-- **Proof of Concept (aktuell):** Free F1 Tier — 0 EUR/Monat
-- **Produktionspfad:** Upgrade auf Standard S1 durch Änderung eines einzigen Parameters (`appServicePlanSku` in `parameters.json`)
 
-Alle Auto-Scale-Konfigurationen sind im ARM Template enthalten und werden bei S1 automatisch aktiviert.
+- **Aktuell (PoC):** Free F1 Tier — 0 EUR/Monat
+- **Produktion:** Upgrade auf S1 via `appServicePlanSku`-Parameter — Auto-Scale und CDN werden automatisch aktiviert
 
-### CDN (Azure Front Door)
+> CDN (Azure Front Door) ist per `enableCdn: false` standardmäßig deaktiviert, da Azure for Students keine Front Door-Ressourcen unterstützt.
 
-Das CDN ist über den Parameter `enableCdn` steuerbar (Default: `false`). Azure for Students unterstützt keine CDN/Front Door-Ressourcen, daher ist das CDN standardmäßig deaktiviert. Bei einem Upgrade auf ein bezahltes Abonnement kann es durch Setzen von `enableCdn` auf `true` in `parameters.json` aktiviert werden. Die CDN-Konfiguration (Azure Front Door Standard mit HTTPS-Only-Routing) ist vollständig im Template definiert.
+---
 
 ## Projektstruktur
 
@@ -37,49 +38,52 @@ Das CDN ist über den Parameter `enableCdn` steuerbar (Default: `false`). Azure 
 cloud-website-project/
 ├── azuredeploy.json     # ARM Template — alle Ressourcen-Definitionen
 ├── parameters.json      # Deployment-Parameter (SKU, Region, App-Name)
-├── index.html           # Test-Website (statisches HTML)
+├── index.html           # Statische Website
 ├── deploy.bat           # Deployment-Script (Windows)
 ├── deploy.sh            # Deployment-Script (Linux/Mac)
-├── .gitignore
 └── README.md
 ```
 
-## Deployment-Anleitung
+---
 
-**Voraussetzungen:** Azure for Students Account, Azure CLI installiert
+## Deployment
 
-1. Azure CLI Login: `az login`
-2. Script ausführen: `deploy.bat` (Windows) oder `bash deploy.sh` (Linux/Mac)
-3. Das Script erstellt automatisch die Resource Group, deployt das ARM Template und die Website
+**Voraussetzungen:** Azure for Students Account, Azure CLI
 
-### Parameter
+```bash
+az login
+# Windows:
+deploy.bat
+# Linux/Mac:
+bash deploy.sh
+```
 
-Das ARM Template unterstützt folgende Parameter (alle mit Default-Werten für sofortige Nutzung):
+Das Script erstellt die Resource Group, deployt das ARM Template und die Website automatisch.
 
-| Parameter | Typ | Default | Beschreibung |
-|---|---|---|---|
-| `appServicePlanName` | string | `cloud-website-plan` | Name des App Service Plans (2–60 Zeichen) |
-| `webAppName` | string | *(pflicht)* | Eindeutiger Name der Web App (2–60 Zeichen) |
-| `location` | string | Resource Group Location | Azure Region |
-| `appServicePlanSku` | string | `F1` | SKU: `F1` (Free) oder `S1` (Standard) |
-| `cdnProfileName` | string | `cloud-website-cdn` | Name des CDN Profils |
-| `cdnEndpointName` | string | `cdn-azure-cloud` | Eindeutiger Name des CDN Endpoints |
-| `enableCdn` | bool | `false` | CDN aktivieren (nicht verfügbar auf Student-Accounts) |
-| `appServicePlanCapacity` | int | `1` | Instanzanzahl (1–10, bei F1 nur 1) |
-| `logRetentionInDays` | int | `30` | Log-Aufbewahrungsdauer in Tagen (7–365) |
-| `resourceTags` | object | siehe unten | Tags für Governance und Kostenkontrolle |
+### Wichtige Parameter
+
+| Parameter | Default | Beschreibung |
+|---|---|---|
+| `webAppName` | *(Pflicht)* | Eindeutiger Name der Web App |
+| `appServicePlanSku` | `F1` | `F1` (Free) oder `S1` (Standard mit Auto-Scale) |
+| `enableCdn` | `false` | CDN aktivieren (nur bei bezahltem Abo) |
+| `logRetentionInDays` | `30` | Log-Aufbewahrung in Tagen (7–365) |
+
+Alle Parameter haben sinnvolle Defaults und sind in `parameters.json` konfigurierbar.
+
+---
+
+## Sicherheitskonzept
+
+- HTTPS-Only für App Service und CDN; TLS 1.2 Mindestversion
+- FTPS deaktiviert
+- Keine Credentials im Template (Azure Key Vault als Erweiterungsoption)
+
+---
 
 ## Governance
 
-### Resource Tags
-
-Alle Ressourcen werden einheitlich mit Tags versehen. Dies ermöglicht:
-
-- **Kostenkontrolle:** Kosten können im Azure Cost Management nach Projekt, Umgebung oder Verantwortlichem gefiltert und zugeordnet werden.
-- **Compliance:** Tags dokumentieren Projektkontext und Verantwortlichkeit für Audits und interne Richtlinien.
-- **Ressourcen-Management:** Gruppierung und Filterung im Azure Portal über Tag-basierte Ansichten.
-
-Standard-Tags (überschreibbar via `resourceTags`-Parameter):
+Alle Ressourcen werden mit einheitlichen Tags versehen (Kostenkontrolle, Compliance, Ressourcen-Management):
 
 ```json
 {
@@ -89,27 +93,16 @@ Standard-Tags (überschreibbar via `resourceTags`-Parameter):
 }
 ```
 
-Diagnostic Settings unterstützen keine Tags und werden daher ausgelassen.
+---
 
-## Sicherheitskonzept
+## Technologieentscheidungen
 
-- HTTPS-Only Enforcement für App Service und CDN
-- TLS 1.2 als Mindestversion
-- FTPS deaktiviert (Disabled)
-- CDN: ausschließlich HTTPS-Zugriff (`isHttpAllowed: false`)
-- Keine sensitiven Credentials im Template — bei Bedarf wäre Azure Key Vault als Referenz in `parameters.json` einsetzbar
+**ARM Templates** wurden gegenüber Terraform gewählt: native Azure-Integration, keine zusätzliche Tool-Installation, bedingte Ressourcen-Definitionen direkt unterstützt.
 
-## Toolwahl: ARM Templates vs. Alternativen
+**Evaluierte Alternativen (nicht gewählt):**
 
-ARM Templates wurden als IaC-Framework gewählt, da sie nativ in Azure integriert sind und keine zusätzliche Tool-Installation erfordern (im Gegensatz zu Terraform). Die JSON-basierte Struktur ist direkt versionierbar und ermöglicht bedingte Ressourcen-Definitionen (z.B. Auto-Scale nur bei S1). Terraform wäre als cloud-agnostische Alternative portabler, aber für ein reines Azure-Projekt bieten ARM Templates tiefere Integration.
-
-## Alternative Architektur-Ansätze (nicht gewählt)
-
-Folgende Alternativen wurden evaluiert:
-
-| Alternative | Grund für Nicht-Wahl |
+| Alternative | Grund |
 |---|---|
-| Azure Static Web Apps | Kein App Service Plan, dadurch kein Auto-Scale demonstrierbar |
-| Azure Front Door | Ersetzt CDN mit erweiterten Features, aber höhere Kosten und Komplexität für PoC |
-| Azure Traffic Manager | DNS-basiertes Routing, relevant bei Multi-Region-Setups — übersteigt PoC-Scope |
-| AWS CloudFront + EC2 | Kreditkartenpflicht, kein kostenloses Studentenkonto vergleichbar mit Azure |
+| Azure Static Web Apps | Kein App Service Plan → kein Auto-Scale demonstrierbar |
+| Azure Traffic Manager | Nur bei Multi-Region relevant — übersteigt PoC-Scope |
+| AWS CloudFront + EC2 | Kein vergleichbares kostenloses Studentenkonto |
